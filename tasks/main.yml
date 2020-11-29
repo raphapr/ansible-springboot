@@ -2,12 +2,14 @@
 - name: "Check for required inventory springboot_application_name variable"
   fail:
     msg: springboot_application_name variable is required and should be defined in you inventory
-  when: not springboot_application_name
+  when: springboot_application_name == 'None'
 
 - name: "Check for required inventory springboot_src_file or springboot_src_url variable"
   fail:
     msg: springboot_src variable or springboot_src_url is required and should be defined in you inventory
-  when: (not springboot_src_file) and (not springboot_src_url)
+  when:
+    - springboot_src_file == 'None'
+    - springboot_src_url == 'None'
 
 - name: os-specific vars
   include_vars: "{{ ansible_os_family }}.yml"
@@ -41,7 +43,9 @@
     owner: "{{ springboot_user }}"
     group: "{{ springboot_group }}"
     mode: "u+x"
-  when: springboot_src_file is defined and springboot_src_file|length > 0
+  when:
+    - springboot_src_file != 'None'
+    - springboot_src_file|length > 0
   notify:
     - "Restart application"
 
@@ -52,9 +56,13 @@
     owner: "{{ springboot_user }}"
     group: "{{ springboot_group }}"
     mode: "u+x"
-  when: springboot_src_url is defined and springboot_src_url|length > 0
+  when:
+    - springboot_src_url != 'None'
+    - springboot_src_url|length > 0
   notify:
     - "Restart application"
+  changed_when: springboot_force_deploy
+  tags: springboot-deploy
 
 - name: "Deploy app properties"
   template:
@@ -62,9 +70,10 @@
     dest: "{{ springboot_deploy_folder }}"
     owner: "{{ springboot_user }}"
     group: "{{ springboot_group }}"
-  when: springboot_propertyfile_template
+  when: springboot_propertyfile_template != 'None'
   notify:
     - "Restart application"
+  tags: springboot-deploy
 
 - name: "Deploy app config"
   template:
@@ -72,9 +81,12 @@
     dest: "{{ springboot_deploy_folder }}"
     owner: "{{ springboot_user }}"
     group: "{{ springboot_group }}"
-  when: springboot_configuration_template
+  when: springboot_configuration_template != 'None'
   notify:
     - "Restart application"
+  tags: springboot-deploy
+
 
 - name: Install as service
   include: service.yml
+  tags: springboot-deploy

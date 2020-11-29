@@ -1,11 +1,14 @@
 [Unit]
-Description={{ springboot_application_name }}
+Description={{ springboot_service_name }}
 After=syslog.target
 
 [Service]
 User={{ springboot_user }}
-ExecStart="{{ springboot_deploy_folder }}/{{ springboot_application_name }}.jar"
+ExecStart=java -jar {{ springboot_java_opts }} {{ springboot_deploy_folder }}/{{ springboot_application_name }}.jar
 SuccessExitStatus=143
+Type=simple
+Restart=on-failure
+RestartSec=10
 
 [Install]
 WantedBy=multi-user.target
